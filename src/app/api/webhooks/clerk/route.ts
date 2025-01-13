@@ -8,8 +8,8 @@ import { env } from "@/data/env/server"
 // } from "@/server/db/subscription"
 // import { deleteUser } from "@/server/db/users"
 // import { Stripe } from "stripe"
-import { db } from "@/drizzle/db"
-import { UserSubscriptionTable } from "@/drizzle/schema"
+import { createUserSubscription } from "@/server/db/subscription"
+import { deleteUser } from "@/server/db/users"
 
 // const stripe = new Stripe(env.STRIPE_SECRET_KEY)
 
@@ -47,29 +47,26 @@ export async function POST(req: Request) {
   switch (event.type) {
     case "user.created": {
       //user created on clerk => assign the free tier
-      // await createUserSubscription({
-      //   clerkUserId: event.data.id,
-      //   tier: "Free",
-      // })
-      console.log("hi");
-      
-      await db.insert(UserSubscriptionTable).values({
+      await createUserSubscription({
         clerkUserId: event.data.id,
         tier: 'Free'
       })
       break
     }
-    // case "user.deleted": {
-    //   if (event.data.id != null) {
-    //     const userSubscription = await getUserSubscription(event.data.id)
-    //     if (userSubscription?.stripeSubscriptionId != null) {
-    //       await stripe.subscriptions.cancel(
-    //         userSubscription?.stripeSubscriptionId
-    //       )
-    //     }
-    //     await deleteUser(event.data.id)
-    //   }
-    // }
+    case "user.deleted": {
+      if (event.data.id != null) {
+        await deleteUser(event.data.id)
+      }
+      // if (event.data.id != null) {
+      //   const userSubscription = await getUserSubscription(event.data.id)
+      //   if (userSubscription?.stripeSubscriptionId != null) {
+      //     await stripe.subscriptions.cancel(
+      //       userSubscription?.stripeSubscriptionId
+      //     )
+      //   }
+      //   await deleteUser(event.data.id)
+      // }
+    }
   }
 
   return new Response("", { status: 200 })
