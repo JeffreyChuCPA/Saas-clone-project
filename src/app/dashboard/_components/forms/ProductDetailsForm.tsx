@@ -16,31 +16,44 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { productDetailsSchema } from "@/schemas/products";
-import { createProduct } from "@/server/actions/products";
+import { createProduct, updateProduct } from "@/server/actions/products";
 import { useToast } from "@/hooks/use-toast";
+import { RequiredLabelIcon } from "@/components/RequiredLabelIcon";
 
 // Define the form component
-export function ProductDetailsForm() {
-  const { toast } = useToast()
+export function ProductDetailsForm({
+  product
+}: {
+  product?: {
+    id: string;
+    name: string;
+    description: string | null;
+    url: string;
+  };
+}) {
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof productDetailsSchema>>({
     resolver: zodResolver(productDetailsSchema),
-    defaultValues: {
-      name: "",
-      url: "",
-      description: ""
-    }
+    defaultValues: product
+      ? { ...product, description: product?.description ?? "" }
+      : {
+          name: "",
+          url: "",
+          description: ""
+        }
   });
 
   // Define the submit function
   async function onSubmit(values: z.infer<typeof productDetailsSchema>) {
-    const data = await createProduct(values)
+    const action = product == null ? createProduct : updateProduct.bind(null, product.id)
+    const data = await action(values);
 
     if (data?.message) {
       toast({
         title: data.error ? "Error" : "Success",
         description: data.message,
         variant: data.error ? "destructive" : "default"
-      })
+      });
     }
   }
 
@@ -57,7 +70,10 @@ export function ProductDetailsForm() {
             render={({ field }) => (
               // form field rendering code
               <FormItem>
-                <FormLabel>Product Name</FormLabel>
+                <FormLabel>
+                  Product Name
+                  <RequiredLabelIcon />
+                </FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -71,7 +87,10 @@ export function ProductDetailsForm() {
             name="url"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Enter your website URL</FormLabel>
+                <FormLabel>
+                  Enter your website URL
+                  <RequiredLabelIcon />
+                </FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -85,27 +104,28 @@ export function ProductDetailsForm() {
           />
           {/* Add more FormField components for other fields */}
         </div>
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Product Description</FormLabel>
-                <FormControl>
-                  <Textarea className="min-h-20 resize-none" {...field} />
-                </FormControl>
-                <FormDescription>
-                  An optional description to help distinguish your product from other products
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="self-end">
-            <Button disabled={form.formState.isSubmitting} type="submit">
-              Save
-            </Button>
-          </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product Description</FormLabel>
+              <FormControl>
+                <Textarea className="min-h-20 resize-none" {...field} />
+              </FormControl>
+              <FormDescription>
+                An optional description to help distinguish your product from
+                other products
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="self-end">
+          <Button disabled={form.formState.isSubmitting} type="submit">
+            Save
+          </Button>
+        </div>
       </form>
     </Form>
   );

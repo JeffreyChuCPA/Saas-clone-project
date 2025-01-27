@@ -63,7 +63,7 @@ export const ProductCustomizationTable = pgTable("product_customizations", {
     ),
   backgroundColor: text("background_color")
     .notNull()
-    .default("hsl(193, 82%, 31%"),
+    .default("hsl(193, 82%, 31%)"),
   textColor: text("text_color").notNull().default("hsl(0, 0%, 100%)"),
   fontSize: text("font_size").notNull().default("1rem"),
   bannerContainer: text("banner_container").notNull().default("body"),

@@ -1,0 +1,1 @@
+ALTER TABLE "product_customizations" ALTER COLUMN "background_color" SET DEFAULT 'hsl(193, 82%, 31%)';
