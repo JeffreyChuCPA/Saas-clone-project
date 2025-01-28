@@ -12,7 +12,7 @@ import {
   getUserTag,
   revalidateDbCache
 } from "@/lib/cache";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { BatchItem } from "drizzle-orm/batch";
 
 //*if creating something, revalidate cache
@@ -53,7 +53,7 @@ export function getProductCustomization({
 }
 
 //wrapper function to get the proper tagging for cache
-export function getProducts(userId: string, { limit }: { limit?: number }) {
+export function getProducts(userId: string, { limit }: { limit?: number } = {}) {
   //moved db query logic to getProductsInternal
   //Below gets info from the cache and return to user, otherwise call the getProductsInternal function
   const cacheFn = dbCache(getProductsInternal, {
@@ -69,6 +69,14 @@ export function getProduct({ id, userId }: { id: string; userId: string }) {
   });
 
   return cacheFn({ id, userId });
+}
+
+export function getProductCount(userId: string) {
+  const cacheFn = dbCache(getProductCountInternal, {
+    tags: [getUserTag(userId, CACHE_TAGS.products)]
+  });
+
+  return cacheFn(userId);
 }
 
 //insert new row and get back the new id created
@@ -292,4 +300,10 @@ async function getProductCustomizationInternal({
   })
 
   return data?.productCustomization
+}
+
+async function getProductCountInternal(userId: string) {
+  const counts = await db.select({productCount: count()}).from(ProductTable).where(eq(ProductTable.clerkUserId, userId))
+
+  return counts[0]?.productCount ?? 0
 }
